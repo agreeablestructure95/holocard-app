@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HoloCard Deployment Checker</title>
+    <style>
+        body { font-family: system-ui; max-width: 600px; margin: 50px auto; padding: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .url-input { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>🚀 HoloCard Deployment Checker</h1>
+    
+    <div>
+        <h3>Frontend URL:</h3>
+        <input type="url" id="frontendUrl" class="url-input" placeholder="https://your-app.vercel.app" />
+        <button onclick="checkFrontend()">Check Frontend</button>
+        <div id="frontendStatus"></div>
+    </div>
+
+    <div>
+        <h3>Backend URL:</h3>
+        <input type="url" id="backendUrl" class="url-input" placeholder="https://your-backend.railway.app" />
+        <button onclick="checkBackend()">Check Backend</button>
+        <div id="backendStatus"></div>
+    </div>
+
+    <div>
+        <h3>Mobile Test:</h3>
+        <button onclick="testMobile()">Test Mobile Features</button>
+        <div id="mobileStatus"></div>
+    </div>
+
+    <script>
+        async function checkFrontend() {
+            const url = document.getElementById('frontendUrl').value;
+            const status = document.getElementById('frontendStatus');
+            
+            if (!url) {
+                status.innerHTML = '<div class="status error">Please enter a frontend URL</div>';
+                return;
+            }
+
+            try {
+                const response = await fetch(url);
+                if (response.ok) {
+                    status.innerHTML = '<div class="status success">✅ Frontend is live and accessible!</div>';
+                } else {
+                    status.innerHTML = '<div class="status error">❌ Frontend returned error: ' + response.status + '</div>';
+                }
+            } catch (error) {
+                status.innerHTML = '<div class="status error">❌ Cannot reach frontend: ' + error.message + '</div>';
+            }
+        }
+
+        async function checkBackend() {
+            const url = document.getElementById('backendUrl').value;
+            const status = document.getElementById('backendStatus');
+            
+            if (!url) {
+                status.innerHTML = '<div class="status error">Please enter a backend URL</div>';
+                return;
+            }
+
+            try {
+                const healthUrl = url + (url.endsWith('/') ? 'health' : '/health');
+                const response = await fetch(healthUrl);
+                const data = await response.json();
+                
+                if (response.ok && data.status === 'OK') {
+                    status.innerHTML = '<div class="status success">✅ Backend is live! Environment: ' + (data.environment || 'unknown') + '</div>';
+                } else {
+                    status.innerHTML = '<div class="status error">❌ Backend health check failed</div>';
+                }
+            } catch (error) {
+                status.innerHTML = '<div class="status error">❌ Cannot reach backend: ' + error.message + '</div>';
+            }
+        }
+
+        function testMobile() {
+            const status = document.getElementById('mobileStatus');
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            const hasTouch = 'ontouchstart' in window;
+            const supportsAR = 'xr' in navigator;
+            
+            let html = '<div class="status ' + (isMobile ? 'success' : 'warning') + '">';
+            html += isMobile ? '✅ Running on mobile device' : '⚠️ Not on mobile device';
+            html += '</div>';
+            
+            html += '<div class="status ' + (hasTouch ? 'success' : 'warning') + '">';
+            html += hasTouch ? '✅ Touch support detected' : '⚠️ No touch support';
+            html += '</div>';
+            
+            html += '<div class="status ' + (supportsAR ? 'success' : 'warning') + '">';
+            html += supportsAR ? '✅ WebXR AR support available' : '⚠️ WebXR not supported (fallback AR will work)';
+            html += '</div>';
+            
+            status.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
